@@ -7,13 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="NovaPasta1\**" />
     <Compile Remove="NovaPasta\**" />
-    <Content Remove="NovaPasta1\**" />
     <Content Remove="NovaPasta\**" />
-    <EmbeddedResource Remove="NovaPasta1\**" />
     <EmbeddedResource Remove="NovaPasta\**" />
-    <None Remove="NovaPasta1\**" />
     <None Remove="NovaPasta\**" />
   </ItemGroup>
 
