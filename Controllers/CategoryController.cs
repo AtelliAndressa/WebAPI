@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
-
+using WebAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Endpoint se refere a URl.
@@ -24,6 +24,7 @@ public class CategoryController : ControllerBase
         return new List<Category>();
     }
 
+
     /// <summary>
     /// Nessa rota ele devolve uma categoria especifica baseada no seu id.
     /// </summary>
@@ -36,21 +37,38 @@ public class CategoryController : ControllerBase
         return new Category();
     }
 
+
     /// <summary>
     /// Frombody está pegando o que vem no corpo da requisição, o Ok() está convertendo para um actionResult, comparando com o que está na minha categoria
     /// O ModelState verifica se está dentro do modelo necessário e validando se está cumprindo as especificações da classe
+    /// FromService mostra que o DataContext está sendo gerenciado por serviços pela injeção de dependencia.
+    /// Ele vai gerar o Id automaticamente usando o método do execute scalar do sql.
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
     [HttpPost]
     [Route("")] 
-    public async Task<ActionResult<List<Category>>> Post([FromBody]Category model) 
+    public async Task<ActionResult<List<Category>>> Post(
+        [FromBody]Category model,
+        [FromServices] DataContext context
+    )
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-        else
+
+        try
+        {
+            context.Categories.Add(model);
+            //Para salvar no banco usamos o Save, se não usar não persiste.,
+            await context.SaveChangesAsync();
             return Ok(model);
+        }
+        catch (Exception)
+        {
+            return BadRequest(new { message = "Não foi possível criar a categoria" });
+        }
     }
+
 
     /// <summary>
     /// Essa rota atualiza os dados
@@ -60,7 +78,11 @@ public class CategoryController : ControllerBase
     /// <returns></returns>
     [HttpPut]
     [Route("{id:int}")]
-    public async Task<ActionResult<List<Category>>> Put(int id, [FromBody]Category model)
+    public async Task<ActionResult<List<Category>>> Put(
+        int id, 
+        [FromBody]Category model,
+        [FromServices] DataContext context
+        )
     {
         //verifica se o Id informado é o mesmo do modelo
         if (id != model.Id)
@@ -69,15 +91,44 @@ public class CategoryController : ControllerBase
         //verifica se os dados são válidos
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-        else
+        try
+        {
+            context.Entry<Category>(model).State = EntityState.Modified;
+            await context.SaveChangesAsync();
             return Ok(model);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return BadRequest(new { message = "Esse registro já se encontra atualizado" });
+        }
+        catch (Exception)
+        {
+            return BadRequest(new { message = "Não foi possível atualizar a categoria" });
+        }
+
     }
+
 
     [HttpDelete]
     [Route("{id:int}")]
-    public async Task<ActionResult<List<Category>>> Delete()
+    public async Task<ActionResult<List<Category>>> Delete(
+        int id,
+        [FromServices]DataContext context
+        )
     {
-        return Ok();
+        var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
+        if (category == null)
+            return NotFound(new { message = "Categoria não encontrada" });
+        try
+        {
+            context.Categories.Remove(category);
+            await context.SaveChangesAsync();
+            return Ok(new { message = "Categoria removida com sucesso!" });
+        }
+        catch (Exception)
+        {
+            return BadRequest(new { message = "Não foi possível remover  a categoria" });
+        }
     }
 
 }
