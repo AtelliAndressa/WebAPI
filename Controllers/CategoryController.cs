@@ -16,12 +16,16 @@ public class CategoryController : ControllerBase
     /// <summary>
     /// Utilizando a Task modo async cria threads paralelas para não parar a execução.
     /// Nessa rota ele devolve uma lista de categorias.
+    /// AsNoTracking faz uma leitura da forma mais rápida que pode no db para jogar na tela.
     /// </summary>
     [HttpGet]
     [Route("")]
-    public async Task<ActionResult<List<Category>>> Get() 
+    public async Task<ActionResult<List<Category>>> Get(
+        [FromServices]DataContext context        
+        ) 
     {
-        return new List<Category>();
+        var categories = await context.Categories.AsNoTracking().ToListAsync();
+        return Ok(categories);
     }
 
 
