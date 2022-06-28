@@ -36,9 +36,13 @@ public class CategoryController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Route("{id:int}")] 
-    public async Task<ActionResult<Category>> GetById(int id)
+    public async Task<ActionResult<Category>> GetById(
+        int id,
+        [FromServices]DataContext context
+        )
     {
-        return new Category();
+        var category = await context.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        return category;
     }
 
 
