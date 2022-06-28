@@ -1,15 +1,38 @@
 using WebAPI.Data;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text;
+using WebAPI;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 
+//gerando uma chave simétrica, recebendo a chave criada no settings e transformando em bytes
+var key = Encoding.ASCII.GetBytes(Settings.Secret);
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+
 //Adicionando nosso DataBase InMemory
 //builder.Services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("Database"));
-builder.Services.AddDbContext<DbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("connectionString")));
+builder.Services.AddDbContext<DataContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("connectionString")));
 
 /*Injeção de dependência:
 AddScoped garante que só haja um DataContext por requisição,
@@ -35,6 +58,8 @@ if (app.Environment.IsDevelopment())
 //força o uso https, segurança na aplicação.
 app.UseHttpsRedirection();
 
+//acrescentamos a autenticação
+app.UseAuthentication();
 
 app.UseAuthorization();
 
