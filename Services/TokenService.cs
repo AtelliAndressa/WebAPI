@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Text;
 using WebAPI.Models;
 using Microsoft.IdentityModel.Tokens;
-;
 
 namespace WebAPI.Services
 {
@@ -12,8 +11,11 @@ namespace WebAPI.Services
     {
         public static string GenerateToken(User user)
         {
+            //gerador de token
             var tokenHandler = new JwtSecurityTokenHandler();
+            //chave criada anteriormente
             var key = Encoding.ASCII.GetBytes(Settings.Secret);
+            //descrição do que estará dentro do token
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
